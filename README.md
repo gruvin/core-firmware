@@ -11,6 +11,7 @@ ported (I may not bother.) The main application.cpp sends simple PING packets,
 twice a second and displays (via SerialUSB) incoming packets from
 another radio.
 
+## Original README follows ...
 
 This is the main source code repository of the Spark Core firmware libraries.
 
