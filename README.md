@@ -1,11 +1,11 @@
 # Spark Core Firmware [![Backlog](https://badge.waffle.io/spark/core-firmware.png?label=backlog&title=backlog)](https://waffle.io/spark/core-firmware)
 
-## chibi-port branch
+## chibiArduino port branch
 
 This branch is a work-in-progress, on the way to a Spark library to port
 the Freaklabs [chibiArduino](http://www.freaklabs.org/index.php/chibiArduino.html) 
 communication stack for the AT86RF231 2.4GHz radio tranceiver chip
-(aka Zigbee transport layer device.) At the time of this commit, the code
+(aka Zigbee physical layer device.) At the time of this commit, the code
 appears to be all working, in interrupt mode. Polling mode has not yet been
 ported (I may not bother.) The main application.cpp sends simple PING packets,
 twice a second and displays (via SerialUSB) incoming packets from
