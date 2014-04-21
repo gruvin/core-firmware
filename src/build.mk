@@ -15,6 +15,7 @@ CSRC +=
 # C++ source files included in this build.
 CPPSRC += $(TARGET_SRC_PATH)/application.cpp
 CPPSRC += $(TARGET_SRC_PATH)/main.cpp
+CPPSRC += $(TARGET_SRC_PATH)/chibi.cpp
 CPPSRC += $(TARGET_SRC_PATH)/newlib_stubs.cpp
 CPPSRC += $(TARGET_SRC_PATH)/spark_utilities.cpp
 CPPSRC += $(TARGET_SRC_PATH)/spark_wiring.cpp
