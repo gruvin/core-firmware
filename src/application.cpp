@@ -23,10 +23,22 @@
  ******************************************************************************
  */
 
+/*****
+ * ENABLE JTAG DEBUGGING */
+#define USE_SWD_JTAG 1
+
+
 /* Includes ------------------------------------------------------------------*/  
 #include "application.h"
+#include "chibi.h"
 
 /* Function prototypes -------------------------------------------------------*/
+
+void cmdGetShortAddr(int arg_cnt, char **args);
+void cmdSetShortAddr(int arg_cnt, char **args);
+void cmdSend(int arg_cnt, char **args);
+int strCat(char *buf, unsigned char index, char arg_cnt, char **args);
+
 int tinkerDigitalRead(String pin);
 int tinkerDigitalWrite(String command);
 int tinkerAnalogRead(String pin);
@@ -35,22 +47,153 @@ int tinkerAnalogWrite(String command);
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
-	//Setup the Tinker application here
+  //Setup the Tinker application here
 
-	//Register all the Tinker functions
-	Spark.function("digitalread", tinkerDigitalRead);
-	Spark.function("digitalwrite", tinkerDigitalWrite);
+  //Register all the Tinker functions
+  Spark.function("digitalread", tinkerDigitalRead);
+  Spark.function("digitalwrite", tinkerDigitalWrite);
 
-	Spark.function("analogread", tinkerAnalogRead);
-	Spark.function("analogwrite", tinkerAnalogWrite);
+  Spark.function("analogread", tinkerAnalogRead);
+  Spark.function("analogwrite", tinkerAnalogWrite);
+
+  // Initialize the chibi command line and set the speed to 57600 bps
+  chibiCmdInit(57600);
+
+  // TODO: Remove this. It's just here becasue my test board /RESET pin was stuck in A0. 
+  //       It should be simply tied to the Sparkcore's main /RESET line.
+  pinMode(A0, OUTPUT); // Chibi Radio /RESET
+  digitalWrite(A0, LOW);
+  delay(5);
+  digitalWrite(A0, HIGH);
+  delay(5);
+
+  // Initialize the chibi wireless stack
+  chibiInit();
+
+  // This is where you declare the commands for the command line.
+  // The first argument is the alias you type in the command line. The second
+  // argument is the name of the function that the command will jump to.
+
+  chibiCmdAdd("getsaddr", cmdGetShortAddr);  // set the short address of the node
+  chibiCmdAdd("setsaddr", cmdSetShortAddr);  // get the short address of the node
+  chibiCmdAdd("send", cmdSend);   // send the string typed into the command line
 
 }
 
 /* This function loops forever --------------------------------------------*/
 void loop()
 {
-	//This will run in a loop
+  static uint8_t count = 0;
+  uint8_t data[] = "PING-000";
+
+  // This function checks the command line to see if anything new was typed.
+  chibiCmdPoll();
+
+  // Check if any data was received from the radio. If so, then handle it.
+  if (chibiDataRcvd() == true)
+  { 
+    int rssi, src_addr;
+    byte buf[100];  // this is where we store the received data
+
+    // retrieve the data and the signal strength
+    chibiGetData(buf);
+    rssi = chibiGetRSSI();
+    src_addr = chibiGetSrcAddr();
+
+    // Print out the message and the signal strength
+    Serial.print("Message received from node 0x");
+    Serial.print(src_addr, HEX);
+    Serial.print(": "); 
+    Serial.print((char *)buf); 
+    Serial.print(", RSSI = 0x"); Serial.println(rssi, HEX);
+  }
+
+  // Continuous PING
+  sprintf((char *)data, "PING-%03d", count);
+  chibiTx((uint16_t)0xFFFFF, data, 9);
+  count++;
+  delay(500);
 }
+
+/**************************************************************************/
+// CHIBI USER FUNCTIONS
+/**************************************************************************/
+
+/**************************************************************************/
+/*!
+  Get short address of device from EEPROM
+Usage: getsaddr
+ */
+/**************************************************************************/
+void cmdGetShortAddr(int arg_cnt, char **args)
+{
+  int val;
+
+  val = chibiGetShortAddr();
+  Serial.print("Short Address: "); Serial.println(val, HEX);
+}
+
+/**************************************************************************/
+/*!
+  Write short address of device to EEPROM
+Usage: setsaddr <addr>
+ */
+/**************************************************************************/
+void cmdSetShortAddr(int arg_cnt, char **args)
+{
+  int val;
+
+  val = chibiCmdStr2Num(args[1], 16);
+  chibiSetShortAddr(val);
+}
+
+/**************************************************************************/
+/*!
+  Transmit data to another node wirelessly using Chibi stack. Currently
+  only handles ASCII string payload
+Usage: send <addr> <string...>
+ */
+/**************************************************************************/
+void cmdSend(int arg_cnt, char **args)
+{
+  byte data[100];
+  int addr, len;
+
+  // convert cmd line string to integer with specified base
+  addr = chibiCmdStr2Num(args[1], 16);
+
+  // concatenate strings typed into the command line and send it to
+  // the specified address
+  len = strCat((char *)data, 2, arg_cnt, args);    
+  chibiTx(addr, data,len);
+}
+
+/**************************************************************************/
+/*!
+  Concatenate multiple strings from the command line starting from the
+  given index into one long string separated by spaces.
+ */
+/**************************************************************************/
+int strCat(char *buf, unsigned char index, char arg_cnt, char **args)
+{
+  uint8_t i, len;
+  char *data_ptr;
+
+  data_ptr = buf;
+  for (i=0; i<arg_cnt - index; i++)
+  {
+    len = strlen(args[i+index]);
+    strcpy((char *)data_ptr, (char *)args[i+index]);
+    data_ptr += len;
+    *data_ptr++ = ' ';
+  }
+  *data_ptr++ = '\0';
+
+  return data_ptr - buf;
+}
+
+/*** CHIBI FUNCTIONS END ***/
+
 
 /*******************************************************************************
  * Function Name  : tinkerDigitalRead
