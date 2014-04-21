@@ -12,6 +12,19 @@ mode. Polling mode has not yet been ported (I may not bother.) The main
 application.cpp sends simple PING packets, twice a second and displays (via
 SerialUSB) incoming packets from another radio.
 
+The AT86RF231 chip used for testing this work resides on a custom PCB, which
+was built for this specific purpose. It is is wired to the Sparkcore using the
+following pins ...
+
+* `A5` -> `MOSI`
+* `A4` -> `MISO`
+* `A3` -> `SCK`
+* `A2` -> `/SS`
+* `A1` -> `INT`
+* `A0` -> `SLP_TR`
+* `RESET` -> `/RESET`
+
+
 ## Original README follows ...
 
 This is the main source code repository of the Spark Core firmware libraries.
