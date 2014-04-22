@@ -70,7 +70,7 @@ uint8_t chibiGetPartID();
 void chibiSleepRadio(uint8_t enb);
 void chibiCmdInit(uint32_t speed);
 void chibiCmdPoll();
-void chibiCmdAdd(char *name, void (*func)(int argc, char **argv));
+void chibiCmdAdd(const char *name, void (*func)(int argc, char **argv));
 uint32_t chibiCmdStr2Num(char *str, uint8_t base);
 
 void chibiAesInit(uint8_t *key);

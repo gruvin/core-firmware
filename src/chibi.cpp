@@ -278,7 +278,7 @@ void chibiCmdPoll()
     Add a command to the command table in the command line interface.
 */
 /**************************************************************************/
-void chibiCmdAdd(char *name, void (*func)(int argc, char **argv))
+void chibiCmdAdd(const char *name, void (*func)(int argc, char **argv))
 {
     chb_cmd_add(name, func);
 
