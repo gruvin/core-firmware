@@ -14,6 +14,8 @@ CSRC +=
 
 # C++ source files included in this build.
 CPPSRC += $(TARGET_SRC_PATH)/application.cpp
+CPPSRC += $(TARGET_SRC_PATH)/hardware.cpp
+CPPSRC += $(TARGET_SRC_PATH)/onewire.cpp
 CPPSRC += $(TARGET_SRC_PATH)/main.cpp
 CPPSRC += $(TARGET_SRC_PATH)/newlib_stubs.cpp
 CPPSRC += $(TARGET_SRC_PATH)/spark_utilities.cpp
