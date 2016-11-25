@@ -5,6 +5,7 @@
 #include "service_debug.h"
 #include "core_hal.h"
 #include "filesystem.h"
+#include "bytes2hexbuf.h"
 
 void HAL_System_Info(hal_system_info_t* info, bool create, void* reserved)
 {
@@ -45,7 +46,7 @@ int HAL_FLASH_Update(const uint8_t *pBuffer, uint32_t address, uint32_t length, 
     return 0;
 }
 
- hal_update_complete_t HAL_FLASH_End(void* reserved)
+ hal_update_complete_t HAL_FLASH_End(hal_module_t* mod)
 {
 	 fclose(output_file);
 	 output_file = NULL;
@@ -75,6 +76,12 @@ uint16_t HAL_Get_Claim_Code(char* buffer, unsigned len)
     *buffer = 0;
     return 0;
 }
+
+bool HAL_IsDeviceClaimed(void* reserved)
+{
+	return false;
+}
+
 
 #define EXTERNAL_FLASH_SERVER_DOMAIN_LENGTH 128
 
@@ -137,8 +144,6 @@ void HAL_OTA_Flashed_ResetStatus(void)
 
 #define PUBLIC_KEY_LEN 294
 #define PRIVATE_KEY_LEN 612
-
-char* bytes2hexbuf(const uint8_t* buf, unsigned len, char* out);
 
 void HAL_FLASH_Read_ServerPublicKey(uint8_t *keyBuffer)
 {

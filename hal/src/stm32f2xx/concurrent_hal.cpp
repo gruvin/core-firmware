@@ -33,17 +33,6 @@
 #include "interrupts_hal.h"
 #include <mutex>
 
-inline bool isISR()
-{
-	return (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0;
-}
-
-uint8_t HAL_IsISR()
-{
-	return isISR();
-}
-
-
 // For OpenOCD FreeRTOS support
 extern const int  __attribute__((used)) uxTopUsedPriority = configMAX_PRIORITIES;
 
@@ -311,7 +300,7 @@ void os_condition_variable_notify_all(condition_variable_t cond)
 }
 
 
-int os_queue_create(os_queue_t* queue, size_t item_size, size_t item_count)
+int os_queue_create(os_queue_t* queue, size_t item_size, size_t item_count, void*)
 {
     *queue = xQueueCreate(item_count, item_size);
     return *queue==NULL;
@@ -319,22 +308,23 @@ int os_queue_create(os_queue_t* queue, size_t item_size, size_t item_count)
 
 static_assert(portMAX_DELAY==CONCURRENT_WAIT_FOREVER, "expected portMAX_DELAY==CONCURRENT_WAIT_FOREVER");
 
-int os_queue_put(os_queue_t queue, const void* item, system_tick_t delay)
+int os_queue_put(os_queue_t queue, const void* item, system_tick_t delay, void*)
 {
-	if (isISR())
+	if (HAL_IsISR())
 		return xQueueSendFromISR(queue, item, nullptr)!=pdTRUE;
 	else
 		return xQueueSend(queue, item, delay)!=pdTRUE;
 }
 
-int os_queue_take(os_queue_t queue, void* item, system_tick_t delay)
+int os_queue_take(os_queue_t queue, void* item, system_tick_t delay, void*)
 {
     return xQueueReceive(queue, item, delay)!=pdTRUE;
 }
 
-void os_queue_destroy(os_queue_t queue)
+int os_queue_destroy(os_queue_t queue, void*)
 {
     vQueueDelete(queue);
+    return 0;
 }
 
 

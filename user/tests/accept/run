@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+cd $(dirname "$0")
+this_dir=$(pwd)
+
+PATH="$this_dir/tools:$PATH"
+source ./init_env
+
+cucumber features --expand --tags ~@wip $*

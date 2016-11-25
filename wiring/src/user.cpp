@@ -28,6 +28,7 @@
 #include "spark_wiring_usbserial.h"
 #include "spark_wiring_usartserial.h"
 #include "spark_wiring_watchdog.h"
+#include "spark_wiring_logging.h"
 #include "rng_hal.h"
 
 
@@ -39,6 +40,8 @@
 void setup() __attribute((weak));
 void loop() __attribute((weak));
 
+// needed on ARM GCC
+#if PLATFORM_ID!=3
 /**
  * Declare weak setup/loop implementations so that they are always defined.
  */
@@ -51,7 +54,7 @@ void setup()  {
 void loop() {
 
 }
-
+#endif
 
 /**
  * Allow the application to override this to avoid processing
@@ -61,6 +64,7 @@ void serialEventRun() __attribute__((weak));
 
 void serialEvent() __attribute__((weak));
 void serialEvent1() __attribute__((weak));
+void usbSerialEvent1() __attribute__((weak));
 
 #if PLATFORM_ID==3
 // gcc doesn't allow weak functions to not exist, so they must be defined.
@@ -117,6 +121,10 @@ void serialEventRun()
     if (serialEventRun5) serialEventRun5();
 #endif
 
+#if Wiring_USBSerial1
+    if (usbSerialEvent1 && USBSerial1.available()>0)
+        usbSerialEvent1();
+#endif
 }
 
 #if defined(STM32F2XX)
@@ -155,6 +163,37 @@ bool __backup_ram_was_valid() { return false; }
 
 #endif
 
+#include "system_control.h"
+
+#ifdef USB_VENDOR_REQUEST_ENABLE
+
+// Synchronous handler for customizable requests (USBRequestType::USB_REQUEST_CUSTOM)
+bool __attribute((weak)) usb_request_custom_handler(char* buf, size_t buf_size, size_t req_size, size_t* rep_size) {
+    return false;
+}
+
+bool usb_request_app_handler(USBRequest* req, void* reserved) {
+    switch (req->type) {
+    case USB_REQUEST_LOG_CONFIG: {
+        if (!spark::logProcessConfigRequest(req->data, USB_REQUEST_BUFFER_SIZE, req->request_size, &req->reply_size, (DataFormat)req->format)) {
+            return false;
+        }
+        system_set_usb_request_result(req, USB_REQUEST_RESULT_OK, nullptr);
+        return true;
+    }
+    case USB_REQUEST_CUSTOM: {
+        if (!usb_request_custom_handler(req->data, USB_REQUEST_BUFFER_SIZE, req->request_size, &req->reply_size)) {
+            return false;
+        }
+        system_set_usb_request_result(req, USB_REQUEST_RESULT_OK, nullptr);
+        return true;
+    }
+    default:
+        return false; // Unsupported request type
+    }
+}
+
+#endif // USB_VENDOR_REQUEST_ENABLE
 
 void module_user_init_hook()
 {
@@ -175,5 +214,9 @@ void module_user_init_hook()
     		uint32_t seed = HAL_RNG_GetRandomNumber();
     		random_seed_from_cloud(seed);
     }
+#endif
+
+#ifdef USB_VENDOR_REQUEST_ENABLE
+    system_set_usb_request_app_handler(usb_request_app_handler, nullptr);
 #endif
 }

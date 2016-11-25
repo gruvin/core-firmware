@@ -296,6 +296,8 @@ inline bool time_has_passed(system_tick_t now, system_tick_t tick)
  */
 class CoAPMessageStore
 {
+	LOG_CATEGORY("comm.coap");
+
 	/**
 	 * The head of the list of messages.
 	 */
@@ -578,11 +580,11 @@ public:
 		return server;
 	}
 
-	ProtocolError establish() override
+	ProtocolError establish(uint32_t& flags, uint32_t app_crc) override
 	{
 		server.clear();
 		client.clear();
-		return channel::establish();
+		return channel::establish(flags, app_crc);
 	}
 
 	/**

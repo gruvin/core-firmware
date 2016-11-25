@@ -49,11 +49,13 @@ typedef struct {
 } module_bounds_t;
 
 typedef enum {
+    MODULE_VALIDATION_PASSED           = 0,
     MODULE_VALIDATION_INTEGRITY        = 1<<1,
     MODULE_VALIDATION_DEPENDENCIES     = 1<<2,
     MODULE_VALIDATION_RANGE            = 1<<3,
     MODULE_VALIDATION_PLATFORM         = 1<<4,
     MODULE_VALIDATION_PRODUCT          = 1<<5,
+    MODULE_VALIDATION_DEPENDENCIES_FULL= 1<<6,
     MODULE_VALIDATION_END = 0x7FFF
 } module_validation_flags_t;
 
@@ -130,7 +132,7 @@ typedef enum {
     HAL_UPDATE_APPLIED
 } hal_update_complete_t;
 
-hal_update_complete_t HAL_FLASH_End(void* reserved);
+hal_update_complete_t HAL_FLASH_End(hal_module_t* module);
 
 uint32_t HAL_FLASH_ModuleAddress(uint32_t address);
 uint32_t HAL_FLASH_ModuleLength(uint32_t address);
@@ -143,7 +145,7 @@ void HAL_OTA_Flashed_ResetStatus(void);
 
 /**
  * Set the claim code for this device.
- * @param code  The claim code to set. If null, clears the claim code.
+ * @param code  The claim code to set. If null, clears the claim code and registers the device as claimed.
  * @return 0 on success.
  */
 uint16_t HAL_Set_Claim_Code(const char* code);
@@ -155,6 +157,11 @@ uint16_t HAL_Set_Claim_Code(const char* code);
  * @return          0 on success.
  */
 uint16_t HAL_Get_Claim_Code(char* buffer, unsigned len);
+
+/**
+ * Determines if this device has been claimed.
+ */
+bool HAL_IsDeviceClaimed(void* reserved);
 
 typedef enum
 {

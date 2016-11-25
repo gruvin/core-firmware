@@ -185,8 +185,6 @@ void TCPClient::flush_buffer()
 
 void TCPClient::flush()
 {
-  while (available())
-    read();
 }
 
 
